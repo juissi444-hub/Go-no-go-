@@ -381,7 +381,8 @@
         // Novel stimulus generator
         function generateNovelStimulus(direction) {
             const colors = ['#3498db', '#9b59b6', '#e67e22', '#1abc9c', '#f39c12', '#16a085'];
-            const shapes = ['circle', 'square', 'triangle', 'diamond', 'star', 'hexagon'];
+            // Only use non-directional shapes to avoid confusion with arrow indicators
+            const shapes = ['circle', 'square', 'star', 'hexagon'];
 
             const color = colors[Math.floor(Math.random() * colors.length)];
             const shape = shapes[Math.floor(Math.random() * shapes.length)];
