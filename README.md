@@ -78,12 +78,17 @@ This indicates:
 
 ## Usage
 
-1. **Open the trainer:** Open `index.html` in a modern web browser
+1. **Open the trainer:** Open `index.html` in a modern web browser (desktop or mobile)
 2. **Read instructions:** Review the task instructions on the welcome screen
 3. **Complete Block 1:** Practice with all GO trials
 4. **Complete Block 2:** Experimental block with mixed GO/NO-GO trials
 5. **Review results:** See your accuracy and inhibition failure rate
 6. **Download data:** Export your performance data for analysis
+
+### Input Methods
+- **Desktop:** Use arrow keys (← / →) on your keyboard
+- **Mobile/Tablet:** Use the on-screen buttons (← / →) that appear during trials
+- Both input methods work with the same timing precision
 
 ## Key Metrics
 
@@ -126,7 +131,9 @@ By using **novel stimuli** on each trial:
 - **Pure HTML/JavaScript:** No external dependencies required
 - **Client-side only:** All data processing happens in the browser
 - **Browser compatibility:** Works with all modern browsers (Chrome, Firefox, Safari, Edge)
-- **Responsive design:** Adapts to different screen sizes
+- **Responsive design:** Fully optimized for mobile, tablet, and desktop devices
+- **Touch-optimized:** Large, tap-friendly buttons for mobile users with visual feedback
+- **Cross-platform:** Works on iOS, Android, Windows, macOS, and Linux
 
 ## Analysis Suggestions
 
