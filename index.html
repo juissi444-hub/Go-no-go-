@@ -192,6 +192,113 @@
             text-align: left;
             white-space: pre;
         }
+
+        #response-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 40px;
+            z-index: 5;
+        }
+
+        .response-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #3498db;
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .response-btn:active {
+            background-color: rgba(52, 152, 219, 0.5);
+            transform: scale(0.95);
+        }
+
+        .response-btn:hover {
+            background-color: rgba(52, 152, 219, 0.4);
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+            }
+
+            #container {
+                max-width: 100%;
+                padding: 10px;
+            }
+
+            #instructions {
+                padding: 20px;
+                font-size: 14px;
+            }
+
+            #instructions h1 {
+                font-size: 22px;
+            }
+
+            #instructions h3 {
+                font-size: 16px;
+            }
+
+            #trial-area {
+                width: 100vw;
+                max-width: 500px;
+                height: 80vh;
+                max-height: 500px;
+            }
+
+            #stimulus-container {
+                width: 80%;
+                height: 50%;
+            }
+
+            .response-btn {
+                width: 80px;
+                height: 80px;
+                font-size: 28px;
+            }
+
+            #response-buttons {
+                gap: 30px;
+                bottom: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #instructions {
+                padding: 15px;
+                font-size: 13px;
+            }
+
+            #trial-area {
+                max-width: 100%;
+                height: 70vh;
+            }
+
+            .response-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 24px;
+            }
+
+            #response-buttons {
+                gap: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -202,11 +309,12 @@
 
             <h3>Instructions:</h3>
             <ul>
-                <li><strong>GO Trials:</strong> When you see a novel stimulus appear, press the <strong>LEFT</strong> or <strong>RIGHT arrow key</strong> as quickly as possible (the stimulus will indicate which direction).</li>
+                <li><strong>GO Trials:</strong> When you see a novel stimulus appear, press the <strong>LEFT</strong> or <strong>RIGHT button/arrow key</strong> as quickly as possible (the stimulus will indicate which direction).</li>
                 <li><strong>Response Window:</strong> You have up to <strong>500ms</strong> to respond. If you don't respond in time, you'll see a timeout message.</li>
-                <li><strong>NO-GO Trials:</strong> Sometimes a white circle will appear and turn <strong>RED</strong>. This is the STOP signal. When you see it turn red, you must <strong>NOT press any key</strong>.</li>
+                <li><strong>NO-GO Trials:</strong> Sometimes a white circle will appear and turn <strong>RED</strong>. This is the STOP signal. When you see it turn red, you must <strong>NOT press any button/key</strong>.</li>
                 <li>The stop signal can appear between 100-450ms after the stimulus.</li>
                 <li>Each stimulus is unique to prevent you from developing task-specific strategies.</li>
+                <li><strong>Mobile Users:</strong> Use the LEFT ← and RIGHT → buttons that appear on screen.</li>
             </ul>
 
             <h3>Task Structure:</h3>
@@ -231,6 +339,10 @@
             </div>
             <div id="stop-signal"></div>
             <div id="feedback"></div>
+            <div id="response-buttons">
+                <div class="response-btn" id="left-btn" data-key="ArrowLeft">←</div>
+                <div class="response-btn" id="right-btn" data-key="ArrowRight">→</div>
+            </div>
         </div>
 
         <div id="progress"></div>
@@ -424,12 +536,14 @@
             const stimulus = document.getElementById('stimulus');
             const stopSignal = document.getElementById('stop-signal');
             const feedback = document.getElementById('feedback');
+            const responseButtons = document.getElementById('response-buttons');
 
             fixation.style.display = 'block';
             stimulus.innerHTML = '';
             stopSignal.style.display = 'none';
             stopSignal.classList.remove('red');
             feedback.style.display = 'none';
+            responseButtons.style.display = 'none';
 
             // Show fixation for 500-1000ms
             const fixationDuration = 500 + Math.random() * 500;
@@ -440,12 +554,16 @@
             const fixation = document.getElementById('fixation');
             const stimulus = document.getElementById('stimulus');
             const stopSignal = document.getElementById('stop-signal');
+            const responseButtons = document.getElementById('response-buttons');
             const trial = trials[currentTrial];
 
             fixation.style.display = 'none';
 
             // Generate and show novel stimulus
             stimulus.innerHTML = generateNovelStimulus(trial.direction);
+
+            // Show response buttons
+            responseButtons.style.display = 'flex';
 
             // Show white circle for no-go trials
             if (trial.type === 'nogo') {
@@ -550,9 +668,14 @@
 
         function showFeedback(message, type) {
             const feedback = document.getElementById('feedback');
+            const responseButtons = document.getElementById('response-buttons');
+
             feedback.textContent = message;
             feedback.className = type;
             feedback.style.display = 'block';
+
+            // Hide response buttons during feedback
+            responseButtons.style.display = 'none';
 
             // Log data
             logTrialData();
@@ -665,6 +788,26 @@
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 handleResponse(e.key);
             }
+        });
+
+        // Button click/touch event listeners
+        document.getElementById('left-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            handleResponse('ArrowLeft');
+        });
+
+        document.getElementById('right-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            handleResponse('ArrowRight');
+        });
+
+        // Prevent text selection on mobile when tapping buttons
+        document.querySelectorAll('.response-btn').forEach(btn => {
+            btn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const key = this.getAttribute('data-key');
+                handleResponse(key);
+            });
         });
     </script>
 </body>
