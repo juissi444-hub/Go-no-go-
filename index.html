@@ -330,6 +330,7 @@
             <h2 id="block-title"></h2>
             <p id="block-description"></p>
             <button onclick="startBlock()">Start Block</button>
+            <button onclick="backToMainMenu()">Back to Main Menu</button>
         </div>
 
         <div id="trial-area">
@@ -353,7 +354,7 @@
             <h3>Data Output:</h3>
             <div id="data-output"></div>
             <button onclick="downloadData()">Download Data</button>
-            <button onclick="resetExperiment()">Start New Session</button>
+            <button onclick="backToMainMenu()">Back to Main Menu</button>
         </div>
     </div>
 
@@ -777,6 +778,30 @@
             a.download = `gonogo_data_${Date.now()}.txt`;
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        function backToMainMenu() {
+            // Reset all state
+            currentBlock = 0;
+            currentTrial = 0;
+            trials = [];
+            dataLog = [];
+            trialStartTime = 0;
+            stopSignalTime = 0;
+            responded = false;
+            responseTime1 = 0;
+            status1 = 0;
+            currentTrialData = {};
+            waitingForNoGo = false;
+
+            // Hide all sections
+            document.getElementById('block-info').style.display = 'none';
+            document.getElementById('trial-area').style.display = 'none';
+            document.getElementById('progress').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+
+            // Show instructions
+            document.getElementById('instructions').style.display = 'block';
         }
 
         function resetExperiment() {
