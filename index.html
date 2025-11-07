@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go/No-Go Trainer with Novel Stimuli</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #container {
+            text-align: center;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        #instructions {
+            background-color: #34495e;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        #instructions h1 {
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+
+        #instructions p {
+            margin-bottom: 15px;
+        }
+
+        #instructions ul {
+            text-align: left;
+            margin: 15px auto;
+            max-width: 600px;
+        }
+
+        #instructions li {
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #trial-area {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            margin: 0 auto;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #fixation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: white;
+        }
+
+        #stimulus-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+        }
+
+        #stimulus {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #stop-signal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: white;
+            display: none;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        #stop-signal.red {
+            background-color: #e74c3c;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+        }
+
+        #feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: bold;
+            display: none;
+        }
+
+        #feedback.correct {
+            color: #2ecc71;
+        }
+
+        #feedback.error {
+            color: #e74c3c;
+        }
+
+        #progress {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #bdc3c7;
+        }
+
+        .stimulus-shape {
+            position: absolute;
+        }
+
+        #block-info {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #results {
+            background-color: #34495e;
+            padding: 30px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #results h2 {
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        #results-content {
+            text-align: left;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        #data-output {
+            background-color: #1a1a1a;
+            color: #2ecc71;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            text-align: left;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="instructions">
+            <h1>Go/No-Go Response Inhibition Task</h1>
+            <p><strong>Welcome!</strong> This task measures your ability to respond quickly and to inhibit responses when needed.</p>
+
+            <h3>Instructions:</h3>
+            <ul>
+                <li><strong>GO Trials:</strong> When you see a novel stimulus appear, press the <strong>LEFT</strong> or <strong>RIGHT arrow key</strong> as quickly as possible (the stimulus will indicate which direction).</li>
+                <li><strong>Response Window:</strong> You have up to <strong>500ms</strong> to respond. If you don't respond in time, you'll see a timeout message.</li>
+                <li><strong>NO-GO Trials:</strong> Sometimes a white circle will appear and turn <strong>RED</strong>. This is the STOP signal. When you see it turn red, you must <strong>NOT press any key</strong>.</li>
+                <li>The stop signal can appear between 100-450ms after the stimulus.</li>
+                <li>Each stimulus is unique to prevent you from developing task-specific strategies.</li>
+            </ul>
+
+            <h3>Task Structure:</h3>
+            <ul>
+                <li><strong>Block 1 (Practice):</strong> All trials are GO trials to help you learn the task.</li>
+                <li><strong>Block 2 (Experimental):</strong> Mix of 30 GO trials and 10 NO-GO trials.</li>
+            </ul>
+
+            <button onclick="startExperiment()">Start Experiment</button>
+        </div>
+
+        <div id="block-info" style="display: none;">
+            <h2 id="block-title"></h2>
+            <p id="block-description"></p>
+            <button onclick="startBlock()">Start Block</button>
+        </div>
+
+        <div id="trial-area">
+            <div id="fixation">+</div>
+            <div id="stimulus-container">
+                <div id="stimulus"></div>
+            </div>
+            <div id="stop-signal"></div>
+            <div id="feedback"></div>
+        </div>
+
+        <div id="progress"></div>
+
+        <div id="results">
+            <h2>Experiment Complete!</h2>
+            <div id="results-content"></div>
+            <h3>Data Output:</h3>
+            <div id="data-output"></div>
+            <button onclick="downloadData()">Download Data</button>
+            <button onclick="resetExperiment()">Start New Session</button>
+        </div>
+    </div>
+
+    <script>
+        // Experiment State
+        let currentBlock = 0;
+        let currentTrial = 0;
+        let trials = [];
+        let dataLog = [];
+        let trialStartTime = 0;
+        let stopSignalTime = 0;
+        let responded = false;
+        let responseTime1 = 0;
+        let status1 = 0;
+        let currentTrialData = {};
+        let waitingForNoGo = false;
+
+        // Block configurations
+        const blocks = [
+            { name: "Practice Block", description: "All GO trials to familiarize yourself with the task.", goTrials: 20, nogoTrials: 0 },
+            { name: "Experimental Block", description: "Mixed GO and NO-GO trials. Remember: respond quickly on GO trials, but STOP when the circle turns red!", goTrials: 30, nogoTrials: 10 }
+        ];
+
+        // Novel stimulus generator
+        function generateNovelStimulus(direction) {
+            const colors = ['#3498db', '#9b59b6', '#e67e22', '#1abc9c', '#f39c12', '#16a085'];
+            const shapes = ['circle', 'square', 'triangle', 'diamond', 'star', 'hexagon'];
+
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            const size = 80 + Math.floor(Math.random() * 60);
+            const rotation = Math.floor(Math.random() * 360);
+
+            let svg = '';
+            const centerX = 200;
+            const centerY = 200;
+
+            switch(shape) {
+                case 'circle':
+                    svg = `<circle cx="${centerX}" cy="${centerY}" r="${size/2}" fill="${color}"/>`;
+                    break;
+                case 'square':
+                    svg = `<rect x="${centerX-size/2}" y="${centerY-size/2}" width="${size}" height="${size}" fill="${color}" transform="rotate(${rotation} ${centerX} ${centerY})"/>`;
+                    break;
+                case 'triangle':
+                    const h = size * Math.sqrt(3) / 2;
+                    svg = `<polygon points="${centerX},${centerY-h/2} ${centerX-size/2},${centerY+h/2} ${centerX+size/2},${centerY+h/2}" fill="${color}" transform="rotate(${rotation} ${centerX} ${centerY})"/>`;
+                    break;
+                case 'diamond':
+                    svg = `<polygon points="${centerX},${centerY-size/2} ${centerX+size/2},${centerY} ${centerX},${centerY+size/2} ${centerX-size/2},${centerY}" fill="${color}" transform="rotate(${rotation} ${centerX} ${centerY})"/>`;
+                    break;
+                case 'star':
+                    let starPoints = '';
+                    for (let i = 0; i < 5; i++) {
+                        const angle1 = (i * 144 - 90) * Math.PI / 180;
+                        const angle2 = (i * 144 - 90 + 72) * Math.PI / 180;
+                        const x1 = centerX + size/2 * Math.cos(angle1);
+                        const y1 = centerY + size/2 * Math.sin(angle1);
+                        const x2 = centerX + size/4 * Math.cos(angle2);
+                        const y2 = centerY + size/4 * Math.sin(angle2);
+                        starPoints += `${x1},${y1} ${x2},${y2} `;
+                    }
+                    svg = `<polygon points="${starPoints}" fill="${color}" transform="rotate(${rotation} ${centerX} ${centerY})"/>`;
+                    break;
+                case 'hexagon':
+                    let hexPoints = '';
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i * 60 - 30) * Math.PI / 180;
+                        const x = centerX + size/2 * Math.cos(angle);
+                        const y = centerY + size/2 * Math.sin(angle);
+                        hexPoints += `${x},${y} `;
+                    }
+                    svg = `<polygon points="${hexPoints}" fill="${color}" transform="rotate(${rotation} ${centerX} ${centerY})"/>`;
+                    break;
+            }
+
+            // Add directional arrow
+            const arrowColor = '#ffffff';
+            const arrowSize = 40;
+            let arrow = '';
+
+            if (direction === 'left') {
+                arrow = `<polygon points="${centerX-10},${centerY} ${centerX+20},${centerY-15} ${centerX+20},${centerY+15}" fill="${arrowColor}" transform="rotate(180 ${centerX+5} ${centerY})"/>`;
+            } else {
+                arrow = `<polygon points="${centerX-10},${centerY} ${centerX+20},${centerY-15} ${centerX+20},${centerY+15}" fill="${arrowColor}"/>`;
+            }
+
+            return `<svg width="400" height="400">${svg}${arrow}</svg>`;
+        }
+
+        // Initialize trials for a block
+        function initializeBlock(blockIndex) {
+            trials = [];
+            const block = blocks[blockIndex];
+
+            // Create GO trials
+            for (let i = 0; i < block.goTrials; i++) {
+                const direction = Math.random() < 0.5 ? 'left' : 'right';
+                trials.push({
+                    type: 'go',
+                    direction: direction,
+                    stopSignal: 0
+                });
+            }
+
+            // Create NO-GO trials
+            for (let i = 0; i < block.nogoTrials; i++) {
+                const direction = Math.random() < 0.5 ? 'left' : 'right';
+                const stopSignalDelay = 100 + Math.floor(Math.random() * 351); // 100-450ms
+                trials.push({
+                    type: 'nogo',
+                    direction: direction,
+                    stopSignal: stopSignalDelay
+                });
+            }
+
+            // Shuffle trials
+            trials = trials.sort(() => Math.random() - 0.5);
+            currentTrial = 0;
+        }
+
+        function startExperiment() {
+            document.getElementById('instructions').style.display = 'none';
+            currentBlock = 0;
+            dataLog = [];
+            showBlockInfo();
+        }
+
+        function showBlockInfo() {
+            const blockInfo = document.getElementById('block-info');
+            const block = blocks[currentBlock];
+
+            document.getElementById('block-title').textContent = block.name;
+            document.getElementById('block-description').textContent = block.description;
+            blockInfo.style.display = 'block';
+            document.getElementById('trial-area').style.display = 'none';
+            document.getElementById('progress').style.display = 'none';
+        }
+
+        function startBlock() {
+            document.getElementById('block-info').style.display = 'none';
+            document.getElementById('trial-area').style.display = 'block';
+            document.getElementById('progress').style.display = 'block';
+
+            initializeBlock(currentBlock);
+            startTrial();
+        }
+
+        function startTrial() {
+            if (currentTrial >= trials.length) {
+                endBlock();
+                return;
+            }
+
+            const trial = trials[currentTrial];
+
+            // Reset state
+            responded = false;
+            responseTime1 = 0;
+            status1 = 0;
+            waitingForNoGo = false;
+
+            currentTrialData = {
+                type: trial.type,
+                direction: trial.direction,
+                stopSignal: trial.stopSignal,
+                rt1: 0,
+                status1: 0,
+                rt2: 0,
+                status2: 0,
+                correct: 0
+            };
+
+            updateProgress();
+            showFixation();
+        }
+
+        function showFixation() {
+            const fixation = document.getElementById('fixation');
+            const stimulus = document.getElementById('stimulus');
+            const stopSignal = document.getElementById('stop-signal');
+            const feedback = document.getElementById('feedback');
+
+            fixation.style.display = 'block';
+            stimulus.innerHTML = '';
+            stopSignal.style.display = 'none';
+            stopSignal.classList.remove('red');
+            feedback.style.display = 'none';
+
+            // Show fixation for 500-1000ms
+            const fixationDuration = 500 + Math.random() * 500;
+            setTimeout(showStimulus, fixationDuration);
+        }
+
+        function showStimulus() {
+            const fixation = document.getElementById('fixation');
+            const stimulus = document.getElementById('stimulus');
+            const stopSignal = document.getElementById('stop-signal');
+            const trial = trials[currentTrial];
+
+            fixation.style.display = 'none';
+
+            // Generate and show novel stimulus
+            stimulus.innerHTML = generateNovelStimulus(trial.direction);
+
+            // Show white circle for no-go trials
+            if (trial.type === 'nogo') {
+                stopSignal.style.display = 'block';
+                stopSignal.classList.remove('red');
+
+                // Schedule stop signal
+                setTimeout(() => {
+                    stopSignal.classList.add('red');
+                    stopSignalTime = Date.now();
+
+                    if (!responded) {
+                        waitingForNoGo = true;
+                    }
+                }, trial.stopSignal);
+            }
+
+            trialStartTime = Date.now();
+
+            // Set response timeout
+            setTimeout(() => {
+                if (!responded) {
+                    handleTimeout();
+                }
+            }, 500);
+        }
+
+        function handleResponse(key) {
+            if (!trialStartTime || responded) return;
+
+            const trial = trials[currentTrial];
+            const rt = Date.now() - trialStartTime;
+            const correctKey = (trial.direction === 'left') ? 'ArrowLeft' : 'ArrowRight';
+
+            if (trial.type === 'go') {
+                // GO trial response
+                responded = true;
+                currentTrialData.rt1 = rt;
+
+                if (key === correctKey) {
+                    currentTrialData.status1 = 1; // correct
+                    currentTrialData.correct = 1;
+                    showFeedback('Correct!', 'correct');
+                } else {
+                    currentTrialData.status1 = 2; // wrong
+                    currentTrialData.correct = 0;
+                    showFeedback('Wrong Key!', 'error');
+                }
+            } else {
+                // NO-GO trial response
+                if (!waitingForNoGo) {
+                    // Response before stop signal
+                    responseTime1 = rt;
+                    currentTrialData.rt1 = rt;
+
+                    if (key === correctKey) {
+                        currentTrialData.status1 = 1;
+                    } else {
+                        currentTrialData.status1 = 2;
+                    }
+                } else {
+                    // Response after stop signal (should have been inhibited)
+                    responded = true;
+                    const rt2 = Date.now() - stopSignalTime;
+                    currentTrialData.rt2 = rt2;
+                    currentTrialData.status2 = 2; // wrong - failed to inhibit
+                    currentTrialData.correct = 0;
+                    showFeedback('You should have STOPPED!', 'error');
+                }
+            }
+        }
+
+        function handleTimeout() {
+            if (responded) return;
+
+            const trial = trials[currentTrial];
+
+            if (trial.type === 'go') {
+                // GO trial timeout
+                responded = true;
+                currentTrialData.rt1 = 0;
+                currentTrialData.status1 = 3; // timeout
+                currentTrialData.correct = 0;
+                showFeedback('Too Slow!', 'error');
+            } else {
+                // NO-GO trial - check if they correctly inhibited
+                if (waitingForNoGo) {
+                    responded = true;
+                    currentTrialData.rt2 = 0;
+                    currentTrialData.status2 = 1; // correct - successfully inhibited
+                    currentTrialData.correct = 1;
+                    showFeedback('Correct! You stopped.', 'correct');
+                } else {
+                    // They didn't respond before stop signal, now timeout
+                    currentTrialData.rt2 = 0;
+                    currentTrialData.status2 = 3; // timeout
+                    currentTrialData.correct = 1; // Still correct because they didn't respond
+                    showFeedback('Correct! You stopped.', 'correct');
+                }
+            }
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = type;
+            feedback.style.display = 'block';
+
+            // Log data
+            logTrialData();
+
+            // Next trial after feedback
+            setTimeout(() => {
+                currentTrial++;
+                startTrial();
+            }, 800);
+        }
+
+        function logTrialData() {
+            const trial = trials[currentTrial];
+            const data = currentTrialData;
+
+            // Format: type, direction, stopSignal, rt1, status1, rt2, status2, correct
+            const logLine = `${data.type}\t${data.direction}\t${data.stopSignal}\t${data.rt1}\t${data.status1}\t${data.rt2}\t${data.status2}\t${data.correct}`;
+            dataLog.push(logLine);
+        }
+
+        function updateProgress() {
+            const progress = document.getElementById('progress');
+            progress.textContent = `Block ${currentBlock + 1}/${blocks.length} | Trial ${currentTrial + 1}/${trials.length}`;
+        }
+
+        function endBlock() {
+            currentBlock++;
+
+            if (currentBlock < blocks.length) {
+                showBlockInfo();
+            } else {
+                endExperiment();
+            }
+        }
+
+        function endExperiment() {
+            document.getElementById('trial-area').style.display = 'none';
+            document.getElementById('progress').style.display = 'none';
+
+            // Calculate statistics
+            let totalTrials = dataLog.length;
+            let correctTrials = 0;
+            let goCorrect = 0;
+            let goTotal = 0;
+            let nogoCorrect = 0;
+            let nogoTotal = 0;
+            let nogoErrors = 0;
+
+            dataLog.forEach(line => {
+                const parts = line.split('\t');
+                const type = parts[0];
+                const correct = parseInt(parts[7]);
+
+                if (correct === 1) correctTrials++;
+
+                if (type === 'go') {
+                    goTotal++;
+                    if (correct === 1) goCorrect++;
+                } else {
+                    nogoTotal++;
+                    if (correct === 1) {
+                        nogoCorrect++;
+                    } else {
+                        nogoErrors++;
+                    }
+                }
+            });
+
+            const accuracy = ((correctTrials / totalTrials) * 100).toFixed(1);
+            const goAccuracy = goTotal > 0 ? ((goCorrect / goTotal) * 100).toFixed(1) : 0;
+            const nogoAccuracy = nogoTotal > 0 ? ((nogoCorrect / nogoTotal) * 100).toFixed(1) : 0;
+            const inhibitionFailureRate = nogoTotal > 0 ? ((nogoErrors / nogoTotal) * 100).toFixed(1) : 0;
+
+            const resultsContent = document.getElementById('results-content');
+            resultsContent.innerHTML = `
+                <p><strong>Overall Accuracy:</strong> ${accuracy}%</p>
+                <p><strong>GO Trials:</strong> ${goCorrect}/${goTotal} correct (${goAccuracy}%)</p>
+                <p><strong>NO-GO Trials:</strong> ${nogoCorrect}/${nogoTotal} correct (${nogoAccuracy}%)</p>
+                <p><strong>Inhibition Failure Rate:</strong> ${inhibitionFailureRate}% (errors on NO-GO trials)</p>
+                <br>
+                <p><em>A lower inhibition failure rate indicates better response inhibition ability.</em></p>
+            `;
+
+            // Show data output
+            const dataOutput = document.getElementById('data-output');
+            const header = 'Type\tDirection\tStopSignal\tRT1\tStatus1\tRT2\tStatus2\tCorrect\n';
+            dataOutput.textContent = header + dataLog.join('\n');
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function downloadData() {
+            const header = 'Type\tDirection\tStopSignal\tRT1\tStatus1\tRT2\tStatus2\tCorrect\n';
+            const data = header + dataLog.join('\n');
+            const blob = new Blob([data], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gonogo_data_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetExperiment() {
+            location.reload();
+        }
+
+        // Keyboard event listener
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                handleResponse(e.key);
+            }
+        });
+    </script>
+</body>
+</html>
